@@ -1,0 +1,6 @@
+<span class="badge badge--{{ health }}">
+  {% if health == 'good' %}Healthy
+  {% elsif health == 'warn' %}At Risk
+  {% else %}Needs Upgrade
+  {% endif %}
+</span>

@@ -1,0 +1,47 @@
+<tr class="product-row" data-product-id="{{ product.numericId }}" tabindex="0" role="button">
+  <td class="product-row-name">
+    <div class="product-row-inner">
+      {% if product.firstImage %}
+      <img class="product-thumb" src="{{ product.firstImage }}" alt="{{ product.title }}" loading="lazy" />
+      {% else %}
+      <div class="product-thumb product-thumb--empty"></div>
+      {% endif %}
+      <div class="product-row-info">
+        <a href="/app/products/{{ product.numericId }}?shop={{ shop }}" class="product-title-link">{{ product.title }}</a>
+        <span class="product-type">{{ product.productType }}</span>
+      </div>
+    </div>
+  </td>
+  <td class="td-num">{{ product.impressions }}</td>
+  <td class="td-num{% if product.ctr < benchmarks.avgCtr %} td-below{% endif %}">
+    {{ product.ctr }}%
+  </td>
+  <td class="td-num{% if product.atcRate < benchmarks.avgAtcRate %} td-below{% endif %}">
+    {{ product.atcRate }}%
+  </td>
+  <td class="td-num{% if product.imageCount < 3 %} td-below{% endif %}">
+    {{ product.imageCount }}
+  </td>
+  <td>{% render '_badge', health: product.health %}</td>
+  <td class="td-expand">
+    <button class="expand-btn" aria-label="Toggle details">&#8964;</button>
+  </td>
+</tr>
+<tr class="product-detail-expanded" id="expanded-{{ product.numericId }}" style="display:none;">
+  <td colspan="7">
+    <div class="product-expanded-body">
+      {% if product.flagDetails.size > 0 %}
+        {% for stage in product.flagDetails %}
+          {% render '_diagnosis-card', stage: stage %}
+        {% endfor %}
+      {% else %}
+        <div class="expanded-healthy">
+          <span>&#10003;</span> No photo issues detected — this product looks good!
+        </div>
+      {% endif %}
+      <a href="/app/products/{{ product.numericId }}?shop={{ shop }}" class="btn btn--secondary btn--sm">
+        View Full Analysis &#8594;
+      </a>
+    </div>
+  </td>
+</tr>

@@ -1,0 +1,7 @@
+<div class="kpi-card{% if tone %} kpi-card--{{ tone }}{% endif %}">
+  <div class="kpi-label">{{ label }}</div>
+  <div class="kpi-value">{{ value }}</div>
+  {% if sub %}
+  <div class="kpi-sub">{{ sub }}</div>
+  {% endif %}
+</div>

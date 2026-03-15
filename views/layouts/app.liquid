@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photoshoot Diagnostic{% if product %} — {{ product.title }}{% endif %}</title>
+  <link rel="stylesheet" href="/public/css/app.css" />
+</head>
+<body>
+  <div class="app-shell">
+    {% render '_nav', active_page: active_page, shop: shop %}
+    <main class="app-main">
+      {{ content_for_layout }}
+    </main>
+  </div>
+
+  <script src="/public/js/dashboard.js" defer></script>
+  {% if page_script == 'product-detail' %}
+  <script src="/public/js/product-detail.js" defer></script>
+  {% endif %}
+</body>
+</html>

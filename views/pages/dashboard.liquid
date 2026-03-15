@@ -1,0 +1,102 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Photo Diagnostic</h1>
+    <p class="page-subtitle">Live analysis of your product photos vs. store performance (last 30 days)</p>
+  </div>
+</div>
+
+{% if error %}
+<div class="alert alert--error">
+  <strong>Error loading data:</strong> {{ error }}
+</div>
+{% endif %}
+
+<!-- KPI ROW -->
+<div class="kpi-grid">
+  {% render '_kpi-card', label: 'Total Products', value: summary.total %}
+  {% render '_kpi-card', label: 'Healthy', value: summary.healthy, tone: 'success', sub: 'Photos are working' %}
+  {% render '_kpi-card', label: 'At Risk', value: summary.warn, tone: 'warning', sub: 'Some issues found' %}
+  {% render '_kpi-card', label: 'Needs Upgrade', value: summary.critical, tone: 'critical', sub: 'Photos losing sales' %}
+</div>
+
+<!-- REVENUE IMPACT -->
+{% if summary.critical > 0 %}
+<div class="revenue-impact">
+  <div class="revenue-impact-inner">
+    <h2 class="revenue-impact-title">Photo Issues Are Costing You Sales</h2>
+    <div class="revenue-impact-stats">
+      <div class="impact-stat">
+        <div class="impact-stat-value">{{ summary.critical }}</div>
+        <div class="impact-stat-label">Products need upgrade</div>
+      </div>
+      <div class="impact-divider"></div>
+      <div class="impact-stat">
+        <div class="impact-stat-value">{{ summary.missedAtc }}</div>
+        <div class="impact-stat-label">Missed add-to-carts / month</div>
+      </div>
+      <div class="impact-divider"></div>
+      <div class="impact-stat">
+        <div class="impact-stat-value">${{ summary.revenueLost }}</div>
+        <div class="impact-stat-label">Estimated revenue leaking</div>
+      </div>
+    </div>
+    <p class="revenue-impact-note">
+      Calculated by comparing your underperforming products to your store average ATC rate of {{ benchmarks.avgAtcRate }}%
+    </p>
+  </div>
+</div>
+{% endif %}
+
+<!-- STAGE FILTER TABS -->
+<div class="stage-tabs">
+  <a href="/app/dashboard?shop={{ shop }}"
+     class="stage-tab{% if active_stage == '' %} stage-tab--active{% endif %}">
+    All ({{ summary.total }})
+  </a>
+  {% for stage in stageCounts %}
+  <a href="/app/dashboard?shop={{ shop }}&stage={{ stage.key }}"
+     class="stage-tab{% if active_stage == stage.key %} stage-tab--active{% endif %}">
+    {{ stage.label }} ({{ stage.count }})
+  </a>
+  {% endfor %}
+</div>
+
+<!-- PRODUCT TABLE -->
+<div class="card table-card">
+  {% if products.size == 0 %}
+  <div class="table-empty">
+    <p>
+      {% if active_stage != '' %}
+        No products match this filter.
+        <a href="/app/dashboard?shop={{ shop }}">View all products</a>
+      {% else %}
+        No products found in your store.
+      {% endif %}
+    </p>
+  </div>
+  {% else %}
+  <table class="product-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th class="th-num">Impressions</th>
+        <th class="th-num">CTR <span class="th-avg">(avg {{ benchmarks.avgCtr }}%)</span></th>
+        <th class="th-num">ATC Rate <span class="th-avg">(avg {{ benchmarks.avgAtcRate }}%)</span></th>
+        <th class="th-num">Images</th>
+        <th>Status</th>
+        <th class="th-expand"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in products %}
+        {% render '_product-row', product: product, benchmarks: benchmarks, shop: shop %}
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+
+<!-- CTA BANNER -->
+{% if summary.critical > 0 %}
+  {% render '_cta-banner', critical_count: summary.critical %}
+{% endif %}

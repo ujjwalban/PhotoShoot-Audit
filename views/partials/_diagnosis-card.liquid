@@ -1,0 +1,11 @@
+<div class="diagnosis-card diagnosis-card--{{ stage.key }}">
+  <div class="diagnosis-card-header">
+    <span class="diagnosis-icon">&#9888;</span>
+    <strong class="diagnosis-label">{{ stage.label }}</strong>
+  </div>
+  <p class="diagnosis-why">{{ stage.why }}</p>
+  <div class="diagnosis-fix">
+    <span class="diagnosis-fix-label">Recommended fix:</span>
+    {{ stage.fix }}
+  </div>
+</div>

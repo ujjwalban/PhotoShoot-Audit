@@ -1,0 +1,15 @@
+<nav class="app-nav">
+  <div class="nav-brand">
+    <span class="nav-logo">&#127760;</span>
+    <span class="nav-title">Photoshoot Diagnostic</span>
+  </div>
+  <div class="nav-links">
+    <a href="/app/dashboard?shop={{ shop }}" class="nav-link{% if active_page == 'dashboard' %} active{% endif %}">
+      Dashboard
+    </a>
+  </div>
+  <div class="nav-shop">
+    <span class="shop-dot"></span>
+    <span class="shop-name">{{ shop }}</span>
+  </div>
+</nav>

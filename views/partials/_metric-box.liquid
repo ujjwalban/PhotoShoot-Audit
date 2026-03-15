@@ -1,0 +1,10 @@
+<div class="metric-box{% if below_avg %} metric-box--critical{% endif %}">
+  <div class="metric-box-label">{{ label }}</div>
+  <div class="metric-box-value">{{ value }}{{ unit }}</div>
+  {% if avg_label %}
+  <div class="metric-box-avg">Store avg: {{ avg_value }}{{ unit }}</div>
+  {% endif %}
+  {% if below_avg %}
+  <div class="metric-box-warning">Below average</div>
+  {% endif %}
+</div>

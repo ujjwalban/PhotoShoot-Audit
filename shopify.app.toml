@@ -1,0 +1,23 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "943118bd3bb8b27d9ce7c1c1349c0a2d"
+name = "PhotoShoot Audit"
+application_url = "http://localhost:3000"
+embedded = true
+
+[webhooks]
+api_version = "2026-01"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = ""
+optional_scopes = [ ]
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [ ]
+
+[app_proxy]
+url = "https://e-commerce-brand-3.myshopify.com/app"
+subpath = "photoshoot"
+prefix = "apps"

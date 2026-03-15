@@ -1,0 +1,207 @@
+<!-- BACK LINK -->
+<div class="back-link-wrap">
+  <a href="/app/dashboard?shop={{ shop }}" class="back-link">&#8592; Back to Dashboard</a>
+</div>
+
+<!-- PRODUCT HEADER -->
+<div class="product-header card">
+  <div class="product-gallery">
+    <div class="gallery-main">
+      {% if images.size > 0 %}
+      <img id="main-image" class="gallery-main-img" src="{{ images[0].url }}" alt="{{ product.title }}" />
+      {% else %}
+      <div class="gallery-main-img gallery-empty">No image</div>
+      {% endif %}
+    </div>
+    {% if images.size > 1 %}
+    <div class="gallery-thumbs">
+      {% for img in images %}
+      <img class="gallery-thumb{% if forloop.index == 1 %} gallery-thumb--active{% endif %}"
+           src="{{ img.url }}"
+           alt="{{ product.title }} image {{ forloop.index }}"
+           data-src="{{ img.url }}"
+           loading="lazy" />
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="product-header-info">
+    <div class="product-header-top">
+      <span class="product-type-tag">{{ product.productType }}</span>
+      {% render '_badge', health: diagnosis.health %}
+    </div>
+    <h1 class="product-detail-title">{{ product.title }}</h1>
+    <div class="product-price">${{ product.price }}</div>
+    <div class="product-image-count">{{ product.imageCount }} image{% if product.imageCount != 1 %}s{% endif %}</div>
+
+    {% if diagnosis.flags.size > 0 %}
+    <div class="product-header-flags">
+      {% for flag in diagnosis.flags %}
+      <span class="flag-chip">{{ flag | replace: '_', ' ' }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- METRIC BOXES -->
+<div class="metric-grid">
+  {% assign ctr_below = false %}
+  {% if product.ctr < benchmarks.avgCtr %}{% assign ctr_below = true %}{% endif %}
+  {% render '_metric-box',
+    label: 'CTR (Click-Through Rate)',
+    value: product.ctr,
+    unit: '%',
+    avg_label: 'Store avg',
+    avg_value: benchmarks.avgCtr,
+    below_avg: ctr_below %}
+
+  {% assign atc_below = false %}
+  {% if product.atcRate < benchmarks.avgAtcRate %}{% assign atc_below = true %}{% endif %}
+  {% render '_metric-box',
+    label: 'Add-to-Cart Rate',
+    value: product.atcRate,
+    unit: '%',
+    avg_label: 'Store avg',
+    avg_value: benchmarks.avgAtcRate,
+    below_avg: atc_below %}
+
+  {% assign score_below = false %}
+  {% if imageScores.overall < 50 %}{% assign score_below = true %}{% endif %}
+  {% render '_metric-box',
+    label: 'Image Quality Score',
+    value: imageScores.overall,
+    unit: '/100',
+    below_avg: score_below %}
+
+  {% assign return_high = false %}
+  {% if returnRate > 15 %}{% assign return_high = true %}{% endif %}
+  {% render '_metric-box',
+    label: 'Return Rate',
+    value: returnRate,
+    unit: '%',
+    below_avg: return_high %}
+</div>
+
+<!-- PERFORMANCE FUNNEL -->
+<div class="card">
+  <h2 class="section-title">Performance Funnel <span class="section-period">— Last 30 Days</span></h2>
+  {% render '_funnel',
+    impressions: product.impressions,
+    productViews: product.productViews,
+    addedToCart: product.addedToCart,
+    purchases: product.purchases,
+    ctr: product.ctr,
+    atcRate: product.atcRate %}
+</div>
+
+<!-- IMAGE QUALITY -->
+{% if imageScores %}
+<div class="card" id="image-quality">
+  <h2 class="section-title">
+    Image Quality Analysis
+    {% if imageScores.isFallback %}
+    <span class="badge-fallback">(Heuristic — add ANTHROPIC_API_KEY for AI analysis)</span>
+    {% else %}
+    <span class="badge-ai">AI-Powered</span>
+    {% endif %}
+  </h2>
+
+  <div class="image-quality-grid">
+    <div class="score-bars">
+      {% render '_score-bar', label: 'Overall', score: imageScores.overall %}
+      {% render '_score-bar', label: 'Lighting', score: imageScores.lighting %}
+      {% render '_score-bar', label: 'Background', score: imageScores.background %}
+      {% render '_score-bar', label: 'Composition', score: imageScores.composition %}
+    </div>
+
+    <div class="image-variety">
+      <h3 class="variety-title">Image Variety</h3>
+      {% render '_check-item', label: 'Lifestyle Shot', present: imageScores.hasLifestyle %}
+      {% render '_check-item', label: 'Scale Reference', present: imageScores.hasScale %}
+      {% render '_check-item', label: 'Detail / Close-up', present: imageScores.hasDetail %}
+      {% render '_check-item', label: 'In-Use Context', present: imageScores.hasInUse %}
+      {% render '_check-item', label: 'Multi-Angle Views', present: imageScores.hasMultiAngle %}
+    </div>
+  </div>
+
+  {% if imageScores.recommendations.size > 0 %}
+  <div class="ai-recommendations">
+    <h3 class="recs-title">Recommendations</h3>
+    <ul class="recs-list">
+      {% for rec in imageScores.recommendations %}
+      <li>{{ rec }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- DIAGNOSIS -->
+<div class="card" id="diagnosis">
+  <h2 class="section-title">
+    Diagnosis
+    <span class="diagnosis-count diagnosis-count--{{ diagnosis.health }}">
+      {{ diagnosis.flags.size }} issue{% if diagnosis.flags.size != 1 %}s{% endif %} detected
+    </span>
+  </h2>
+
+  {% if diagnosis.flagDetails.size == 0 %}
+  <div class="diagnosis-healthy">
+    <span class="healthy-icon">&#10003;</span>
+    <div>
+      <strong>Looks good!</strong>
+      <p>No photo-related issues detected for this product.</p>
+    </div>
+  </div>
+  {% else %}
+    {% for stage in diagnosis.flagDetails %}
+      {% render '_diagnosis-card', stage: stage %}
+    {% endfor %}
+  {% endif %}
+</div>
+
+<!-- CATEGORY PEERS -->
+{% if peers.size > 0 %}
+<div class="card">
+  <h2 class="section-title">{{ product.productType }} — Category Peers</h2>
+  <table class="product-table peers-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th class="th-num">CTR</th>
+        <th class="th-num">ATC Rate</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="peers-this-product">
+        <td><strong>{{ product.title }}</strong> <span class="peers-you">(this product)</span></td>
+        <td class="td-num{% if product.ctr < benchmarks.avgCtr %} td-below{% endif %}">{{ product.ctr }}%</td>
+        <td class="td-num{% if product.atcRate < benchmarks.avgAtcRate %} td-below{% endif %}">{{ product.atcRate }}%</td>
+      </tr>
+      {% for peer in peers %}
+      <tr>
+        <td>{{ peer.title }}</td>
+        <td class="td-num">{{ peer.ctr }}%</td>
+        <td class="td-num">{{ peer.atcRate }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- CTA -->
+<div class="cta-banner cta-banner--product">
+  <div class="cta-banner-content">
+    <div class="cta-banner-text">
+      <strong>Generate AI Photos for {{ product.title }}</strong>
+      <span>Fix {{ diagnosis.flags.size }} detected issue{% if diagnosis.flags.size != 1 %}s{% endif %} with professional AI-generated product photography.</span>
+    </div>
+    <a href="#" class="btn btn--primary btn--lg">
+      Generate AI Photos &#8594;
+    </a>
+  </div>
+</div>

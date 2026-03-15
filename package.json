@@ -1,0 +1,17 @@
+{
+  "name": "photoshoot-diagnostic",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server/index.js",
+    "start": "NODE_ENV=production node server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "liquidjs": "^10.17.0",
+    "@shopify/shopify-api": "^11.0.0",
+    "@shopify/shopify-app-session-storage-memory": "^4.0.0",
+    "@anthropic-ai/sdk": "^0.30.0",
+    "dotenv": "^16.4.0"
+  }
+}

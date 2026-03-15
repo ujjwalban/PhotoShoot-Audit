@@ -1,0 +1,27 @@
+<div class="funnel-flow">
+  <div class="funnel-step">
+    <div class="funnel-count">{{ impressions }}</div>
+    <div class="funnel-step-label">Impressions</div>
+  </div>
+  <div class="funnel-arrow">&#8594;</div>
+  <div class="funnel-step">
+    <div class="funnel-count">{{ productViews }}</div>
+    <div class="funnel-step-label">Page Views</div>
+    {% if impressions > 0 %}
+    <div class="funnel-rate">{{ ctr }}% CTR</div>
+    {% endif %}
+  </div>
+  <div class="funnel-arrow">&#8594;</div>
+  <div class="funnel-step">
+    <div class="funnel-count">{{ addedToCart }}</div>
+    <div class="funnel-step-label">Add to Cart</div>
+    {% if productViews > 0 %}
+    <div class="funnel-rate">{{ atcRate }}% ATC</div>
+    {% endif %}
+  </div>
+  <div class="funnel-arrow">&#8594;</div>
+  <div class="funnel-step">
+    <div class="funnel-count">{{ purchases }}</div>
+    <div class="funnel-step-label">Purchases</div>
+  </div>
+</div>
