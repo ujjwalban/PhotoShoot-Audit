@@ -2,20 +2,20 @@
 
 client_id = "943118bd3bb8b27d9ce7c1c1349c0a2d"
 name = "PhotoShoot Audit"
-application_url = "http://localhost:3000"
-embedded = false
+application_url = "https://photoshoot-audit.vercel.app"
+embedded = true
 
 [webhooks]
 api_version = "2026-01"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = ""
+scopes = "read_products,read_orders,read_analytics"
 optional_scopes = [ ]
 use_legacy_install_flow = false
 
 [auth]
-redirect_urls = [ ]
+redirect_urls = [ "https://photoshoot-audit.vercel.app/auth/callback" ]
 
 [app_proxy]
 url = "https://e-commerce-brand-3.myshopify.com/app"
