@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  {% if apiKey %}<meta name="shopify-api-key" content="{{ apiKey }}" />{% endif %}
   <title>Photoshoot Diagnostic{% if product %} — {{ product.title }}{% endif %}</title>
   <link rel="stylesheet" href="/public/css/app.css" />
 </head>
@@ -13,6 +14,10 @@
       {{ content_for_layout }}
     </main>
   </div>
+
+  {% if host %}
+  <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+  {% endif %}
 
   <script>
     (function() {

@@ -9,6 +9,18 @@ import webhooksRoute from './routes/webhooks.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Shopify Admin embeds apps in an iframe. Allow Shopify origins to frame this app.
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "frame-ancestors https://admin.shopify.com https://*.myshopify.com;"
+  );
+  next();
+});
+
+// When deployed behind a proxy (Vercel), respect X-Forwarded-*.
+app.set('trust proxy', 1);
+
 // Liquid engine — search pages, then layouts, then partials
 const engine = new Liquid({
   root: [
