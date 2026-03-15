@@ -39,8 +39,27 @@ export function setupAuth(app) {
     logger: { level: 0 },
   });
 
-  // Begin OAuth
-  app.get('/auth', async (req, res) => {
+  // Step 1: /auth — ensure we're in top window (break out of iframe), then go to /auth/start
+  // This guarantees the OAuth cookie is set in a first-party context.
+  app.get('/auth', (req, res) => {
+    const shop = req.query.shop;
+    if (!shop) return res.status(400).send('Missing shop parameter');
+    const baseUrl = getAppBaseUrl(req);
+    const authUrl = `${baseUrl}/auth?shop=${encodeURIComponent(shop)}`;
+    const startUrl = `${baseUrl}/auth/start?shop=${encodeURIComponent(shop)}`;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(
+      `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>` +
+      `<script>` +
+      `if (window !== window.top) { window.top.location.href = ${JSON.stringify(authUrl)}; }` +
+      `else { window.location.href = ${JSON.stringify(startUrl)}; }` +
+      `</script>` +
+      `<p>Redirecting…</p></body></html>`
+    );
+  });
+
+  // Step 2: /auth/start — actually start OAuth (sets cookie and redirects to Shopify)
+  app.get('/auth/start', async (req, res) => {
     const shop = req.query.shop;
     if (!shop) return res.status(400).send('Missing shop parameter');
     try {
