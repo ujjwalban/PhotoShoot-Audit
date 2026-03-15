@@ -5,7 +5,29 @@ import { MemorySessionStorage } from '@shopify/shopify-app-session-storage-memor
 let shopify;
 const sessionStorage = new MemorySessionStorage();
 
+/** Build app base URL for redirects (respects Vercel/proxy). */
+function getAppBaseUrl(req) {
+  const envUrl = process.env.SHOPIFY_APP_URL;
+  if (envUrl) return envUrl.replace(/\/$/, '');
+  const proto = req.get('x-forwarded-proto') === 'https' ? 'https' : req.protocol || 'https';
+  const host = req.get('x-forwarded-host') || req.get('host') || '';
+  return `${proto}://${host}`;
+}
+
+/** Send HTML that breaks out of iframe and goes to /auth (so OAuth cookie is first-party). */
+export function sendAuthBreakout(res, req, shop) {
+  const baseUrl = getAppBaseUrl(req);
+  const authUrl = `${baseUrl}/auth?shop=${encodeURIComponent(shop)}`;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(
+    `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>` +
+    `<script>window.top.location.href = ${JSON.stringify(authUrl)};</script>` +
+    `<p>Redirecting to install…</p></body></html>`
+  );
+}
+
 export function setupAuth(app) {
+  // SHOPIFY_APP_URL must match your app URL (e.g. https://photo-shoot-audit.vercel.app) for OAuth redirect_uri and cookies
   shopify = shopifyApi({
     apiKey: process.env.SHOPIFY_API_KEY,
     apiSecretKey: process.env.SHOPIFY_API_SECRET,
@@ -67,8 +89,8 @@ export function setupAuth(app) {
       const validSession = sessions.find(s => s.accessToken && (!s.expires || new Date(s.expires) > new Date()));
 
       if (!validSession) {
-        // Redirect to OAuth
-        return res.redirect(`/auth?shop=${shop}`);
+        // Break out of iframe so OAuth runs in top window (cookie is first-party)
+        return sendAuthBreakout(res, req, shop);
       }
 
       req.shopifySession = validSession;
@@ -76,7 +98,9 @@ export function setupAuth(app) {
       next();
     } catch (err) {
       console.error('Session middleware error:', err);
-      res.redirect(`/auth?shop=${req.query.shop || ''}`);
+      const shop = req.query.shop || '';
+      if (shop) return sendAuthBreakout(res, req, shop);
+      return res.redirect('/');
     }
   });
 }

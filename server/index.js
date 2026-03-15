@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import { Liquid } from 'liquidjs';
-import { setupAuth } from './shopifyAuth.js';
+import { setupAuth, sendAuthBreakout } from './shopifyAuth.js';
 import dashboardRoute from './routes/dashboard.js';
 import productDetailRoute from './routes/productDetail.js';
 import webhooksRoute from './routes/webhooks.js';
@@ -46,10 +46,10 @@ app.get('/app/products/:id', productDetailRoute);
 // Webhooks
 app.post('/webhooks', webhooksRoute);
 
-// Root — redirect to auth
+// Root — break out of iframe then go to auth so OAuth cookie is first-party
 app.get('/', (req, res) => {
   const shop = req.query.shop;
-  if (shop) return res.redirect(`/auth?shop=${shop}`);
+  if (shop) return sendAuthBreakout(res, req, shop);
   res.send('<h2>Photoshoot Diagnostic</h2><p>Install this app from your Shopify partner dashboard.</p>');
 });
 
