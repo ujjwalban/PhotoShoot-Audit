@@ -1,9 +1,4 @@
 {
   "buildCommand": "npm install",
-  "devCommand": "node server/index.js",
-  "functions": {
-    "api/index.js": {
-      "runtime": "nodejs20.x"
-    }
-  }
+  "devCommand": "node server/index.js"
 }
