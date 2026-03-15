@@ -1,4 +1,5 @@
 {
-  "buildCommand": "npm install",
-  "devCommand": "node server/index.js"
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api" }
+  ]
 }
