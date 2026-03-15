@@ -8,6 +8,18 @@ import webhooksRoute from '../server/routes/webhooks.js';
 
 const app = express();
 
+// Trust Vercel's reverse proxy so req.protocol and req.ip are correct
+app.set('trust proxy', 1);
+
+// Allow Shopify Admin to embed this app in an iframe
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "frame-ancestors https://admin.shopify.com https://*.myshopify.com;"
+  );
+  next();
+});
+
 // Liquid engine
 const engine = new Liquid({
   root: [
@@ -41,10 +53,14 @@ app.get('/app/dashboard', dashboardRoute);
 app.get('/app/products/:id', productDetailRoute);
 app.post('/webhooks', webhooksRoute);
 
-// Root
+// Root — when Shopify opens the app it passes ?shop=...&host=...
+// Forward everything to /app so the session-token loader runs (not /auth which does old OAuth)
 app.get('/', (req, res) => {
   const shop = req.query.shop;
-  if (shop) return res.redirect(`/auth?shop=${shop}`);
+  if (shop) {
+    const q = new URLSearchParams(req.query);
+    return res.redirect('/app?' + q.toString());
+  }
   res.send('<h2>Photoshoot Diagnostic</h2><p>Install this app from your Shopify partner dashboard.</p>');
 });
 

@@ -279,7 +279,11 @@ export function setupAuth(app) {
           return next();
         } catch (tokenErr) {
           console.error('Session token error:', tokenErr);
-          // Don't fall through to loader — would cause reload loop. Show reauth instead.
+          // On Vercel (stateless), tokens expire (~1 min). If we have host, serve the
+          // App Bridge loader to get a fresh token — avoids showing the reauth page.
+          if (host) {
+            return sendSessionTokenLoader(res, req, shop, host);
+          }
           return sendReauthPage(res, req, shop);
         }
       }
