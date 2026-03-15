@@ -15,7 +15,21 @@
   </div>
 
   <script>
-    (function(){ var u = new URL(window.location.href); if (u.searchParams.has('token')) { u.searchParams.delete('token'); history.replaceState(null, '', u.pathname + u.search + u.hash); } })();
+    (function() {
+      var u = new URL(window.location.href);
+      var token = u.searchParams.get('token');
+      if (!token) return;
+      document.addEventListener('click', function(e) {
+        var a = e.target.closest('a[href^="/app"]');
+        if (!a || a.target === '_blank') return;
+        var href = a.getAttribute('href');
+        if (!href || href.indexOf('token=') !== -1) return;
+        e.preventDefault();
+        var next = new URL(href, window.location.origin);
+        next.searchParams.set('token', token);
+        window.location.href = next.pathname + '?' + next.searchParams.toString();
+      }, true);
+    })();
   </script>
   <script src="/public/js/dashboard.js" defer></script>
   {% if page_script == 'product-detail' %}

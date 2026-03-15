@@ -179,6 +179,8 @@ export function setupAuth(app) {
           return next();
         } catch (tokenErr) {
           console.error('Session token error:', tokenErr);
+          // Don't fall through to loader — would cause reload loop. Show reauth instead.
+          return sendReauthPage(res, req, shop);
         }
       }
 
