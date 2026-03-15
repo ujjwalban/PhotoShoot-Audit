@@ -71,6 +71,7 @@ export default async function productDetailRoute(req, res) {
       layout: 'app',
       shop: session.shop,
       host: req.query.host,
+      apiKey: process.env.SHOPIFY_API_KEY,
       active_page: 'products',
       page_script: 'product-detail',
       product: productData,

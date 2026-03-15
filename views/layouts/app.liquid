@@ -16,7 +16,9 @@
   </div>
 
   {% if host %}
-  <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+  <!-- App Bridge v3: auto-initializes from the shopify-api-key meta tag + host URL param -->
+  <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"
+          data-api-key="{{ apiKey }}"></script>
   {% endif %}
 
   <script>
