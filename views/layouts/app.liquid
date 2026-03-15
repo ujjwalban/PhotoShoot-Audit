@@ -3,9 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- App Bridge v4 reads this meta tag + the ?host= URL param to auto-initialize -->
   {% if apiKey %}<meta name="shopify-api-key" content="{{ apiKey }}" />{% endif %}
+
   <title>Photoshoot Diagnostic{% if product %} — {{ product.title }}{% endif %}</title>
   <link rel="stylesheet" href="/public/css/app.css" />
+
+  <!-- Load App Bridge BEFORE page renders so it can set up the iframe handshake early -->
+  <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -15,29 +21,36 @@
     </main>
   </div>
 
-  {% if host %}
-  <!-- App Bridge v3: auto-initializes from the shopify-api-key meta tag + host URL param -->
-  <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"
-          data-api-key="{{ apiKey }}"></script>
-  {% endif %}
-
+  <!--
+    Token + host propagation script.
+    Preserves ?token=JWT and ?host= across in-app navigations so the server
+    can authenticate every page load and App Bridge stays connected.
+  -->
   <script>
     (function() {
-      var u = new URL(window.location.href);
-      var token = u.searchParams.get('token');
+      var params = new URLSearchParams(window.location.search);
+      var token  = params.get('token');
       if (!token) return;
+
       document.addEventListener('click', function(e) {
         var a = e.target.closest('a[href^="/app"]');
         if (!a || a.target === '_blank') return;
+
         var href = a.getAttribute('href');
         if (!href || href.indexOf('token=') !== -1) return;
+
         e.preventDefault();
         var next = new URL(href, window.location.origin);
         next.searchParams.set('token', token);
-        window.location.href = next.pathname + '?' + next.searchParams.toString();
+        var host = params.get('host');
+        if (host && !next.searchParams.has('host')) {
+          next.searchParams.set('host', host);
+        }
+        window.location.href = next.toString();
       }, true);
     })();
   </script>
+
   <script src="/public/js/dashboard.js" defer></script>
   {% if page_script == 'product-detail' %}
   <script src="/public/js/product-detail.js" defer></script>
