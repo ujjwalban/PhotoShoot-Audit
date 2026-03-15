@@ -2,7 +2,7 @@
 
 client_id = "943118bd3bb8b27d9ce7c1c1349c0a2d"
 name = "PhotoShoot Audit"
-application_url = "https://photoshoot-audit.vercel.app"
+application_url = "https://photo-shoot-audit.vercel.app"
 embedded = true
 
 [webhooks]
@@ -15,7 +15,7 @@ optional_scopes = [ ]
 use_legacy_install_flow = false
 
 [auth]
-redirect_urls = [ "https://photoshoot-audit.vercel.app/auth/callback" ]
+redirect_urls = [ "https://photo-shoot-audit.vercel.app/auth/callback" ]
 
 [app_proxy]
 url = "https://e-commerce-brand-3.myshopify.com/app"
