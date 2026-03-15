@@ -3,7 +3,7 @@
 client_id = "943118bd3bb8b27d9ce7c1c1349c0a2d"
 name = "PhotoShoot Audit"
 application_url = "http://localhost:3000"
-embedded = true
+embedded = false
 
 [webhooks]
 api_version = "2026-01"

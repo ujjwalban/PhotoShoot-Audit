@@ -1,3 +1,4 @@
+import '@shopify/shopify-api/adapters/node';
 import { shopifyApi, ApiVersion, Session } from '@shopify/shopify-api';
 import { MemorySessionStorage } from '@shopify/shopify-app-session-storage-memory';
 
