@@ -7,7 +7,7 @@
       <div class="product-thumb product-thumb--empty"></div>
       {% endif %}
       <div class="product-row-info">
-        <a href="/app/products/{{ product.numericId }}?shop={{ shop }}" class="product-title-link">{{ product.title }}</a>
+        <a href="/app/products/{{ product.numericId }}?shop={{ shop }}{% if host %}&host={{ host }}{% endif %}" class="product-title-link">{{ product.title }}</a>
         <span class="product-type">{{ product.productType }}</span>
       </div>
     </div>
@@ -39,7 +39,7 @@
           <span>&#10003;</span> No photo issues detected — this product looks good!
         </div>
       {% endif %}
-      <a href="/app/products/{{ product.numericId }}?shop={{ shop }}" class="btn btn--secondary btn--sm">
+      <a href="/app/products/{{ product.numericId }}?shop={{ shop }}{% if host %}&host={{ host }}{% endif %}" class="btn btn--secondary btn--sm">
         View Full Analysis &#8594;
       </a>
     </div>

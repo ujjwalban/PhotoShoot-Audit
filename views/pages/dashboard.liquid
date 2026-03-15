@@ -49,12 +49,12 @@
 
 <!-- STAGE FILTER TABS -->
 <div class="stage-tabs">
-  <a href="/app/dashboard?shop={{ shop }}"
+  <a href="/app/dashboard?shop={{ shop }}{% if host %}&host={{ host }}{% endif %}"
      class="stage-tab{% if active_stage == '' %} stage-tab--active{% endif %}">
     All ({{ summary.total }})
   </a>
   {% for stage in stageCounts %}
-  <a href="/app/dashboard?shop={{ shop }}&stage={{ stage.key }}"
+  <a href="/app/dashboard?shop={{ shop }}&stage={{ stage.key }}{% if host %}&host={{ host }}{% endif %}"
      class="stage-tab{% if active_stage == stage.key %} stage-tab--active{% endif %}">
     {{ stage.label }} ({{ stage.count }})
   </a>
@@ -68,7 +68,7 @@
     <p>
       {% if active_stage != '' %}
         No products match this filter.
-        <a href="/app/dashboard?shop={{ shop }}">View all products</a>
+        <a href="/app/dashboard?shop={{ shop }}{% if host %}&host={{ host }}{% endif %}">View all products</a>
       {% else %}
         No products found in your store.
       {% endif %}

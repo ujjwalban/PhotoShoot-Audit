@@ -14,6 +14,9 @@
     </main>
   </div>
 
+  <script>
+    (function(){ var u = new URL(window.location.href); if (u.searchParams.has('token')) { u.searchParams.delete('token'); history.replaceState(null, '', u.pathname + u.search + u.hash); } })();
+  </script>
   <script src="/public/js/dashboard.js" defer></script>
   {% if page_script == 'product-detail' %}
   <script src="/public/js/product-detail.js" defer></script>

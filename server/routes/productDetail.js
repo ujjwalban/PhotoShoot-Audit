@@ -70,6 +70,7 @@ export default async function productDetailRoute(req, res) {
     res.render('product-detail', {
       layout: 'app',
       shop: session.shop,
+      host: req.query.host,
       active_page: 'products',
       page_script: 'product-detail',
       product: productData,

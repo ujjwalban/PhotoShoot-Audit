@@ -4,7 +4,7 @@
     <span class="nav-title">Photoshoot Diagnostic</span>
   </div>
   <div class="nav-links">
-    <a href="/app/dashboard?shop={{ shop }}" class="nav-link{% if active_page == 'dashboard' %} active{% endif %}">
+    <a href="/app/dashboard?shop={{ shop }}{% if host %}&host={{ host }}{% endif %}" class="nav-link{% if active_page == 'dashboard' %} active{% endif %}">
       Dashboard
     </a>
   </div>

@@ -94,6 +94,7 @@ export default async function dashboardRoute(req, res) {
     res.render('dashboard', {
       layout: 'app',
       shop: session.shop,
+      host: req.query.host,
       active_page: 'dashboard',
       active_stage: stageFilter || '',
       benchmarks,
@@ -114,6 +115,7 @@ export default async function dashboardRoute(req, res) {
     res.status(500).render('dashboard', {
       layout: 'app',
       shop: session.shop,
+      host: req.query.host,
       active_page: 'dashboard',
       active_stage: '',
       benchmarks: { avgCtr: 0, avgAtcRate: 0 },
