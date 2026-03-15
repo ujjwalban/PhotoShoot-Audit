@@ -172,6 +172,27 @@ function sendSessionTokenLoader(res, req, shop, host) {
   res.send(loaderHtml);
 }
 
+/**
+ * Decode Shopify's base64url-encoded `host` param to extract the shop domain.
+ * Shopify encodes it as base64url("admin.shopify.com/store/STORENAME").
+ * Falls back to standard base64 if base64url fails.
+ */
+function extractShopFromHost(host) {
+  if (!host) return null;
+  try {
+    // Shopify uses base64url (replace - with + and _ with /)
+    const b64 = host.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = Buffer.from(b64, 'base64').toString('utf8');
+    // Format: "admin.shopify.com/store/STORENAME"
+    const match = decoded.match(/\/store\/([a-zA-Z0-9-]+)/);
+    if (match) return `${match[1]}.myshopify.com`;
+    // Fallback: might already be "STORENAME.myshopify.com"
+    const directMatch = decoded.match(/^([a-zA-Z0-9-]+\.myshopify\.com)/);
+    if (directMatch) return directMatch[1];
+  } catch (e) { /* ignore */ }
+  return null;
+}
+
 export function setupAuth(app) {
   // SHOPIFY_APP_URL must match your app URL (e.g. https://photo-shoot-audit.vercel.app) for OAuth redirect_uri and cookies
   shopify = shopifyApi({
@@ -244,8 +265,12 @@ export function setupAuth(app) {
   // Supports session tokens (embedded app, no cookies) and fallback to stored session.
   app.use('/app', async (req, res, next) => {
     try {
-      const shop = req.query.shop || req.headers['x-shopify-shop-domain'];
       const host = req.query.host;
+      // Shopify sometimes opens embedded apps without ?shop= (only ?host=base64).
+      // Decode host to extract the shop domain as a fallback.
+      const shop = req.query.shop
+        || req.headers['x-shopify-shop-domain']
+        || extractShopFromHost(host);
       const sessionToken =
         (req.headers.authorization && req.headers.authorization.match(/^Bearer\s+(.+)$/)?.[1]) ||
         req.query.token ||
