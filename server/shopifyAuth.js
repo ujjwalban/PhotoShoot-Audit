@@ -1,3 +1,15 @@
+/**
+ * Shopify app authentication (OAuth + session tokens).
+ *
+ * FLOW FOR EMBEDDED APP (no cookies in iframe):
+ * 1. Admin opens app → GET / or /app?shop=...&host=... (host = base64 from Shopify).
+ * 2. Root redirects to /app with same query. Middleware sees no token but has host → sends loader HTML.
+ * 3. Loader loads App Bridge from Shopify CDN, createApp({ apiKey, host }), getSessionToken(app).
+ * 4. Loader redirects to same URL with ?token=JWT. Middleware decodes JWT, runs token exchange, stores session, renders app.
+ * 5. In-app links preserve token via client script so navigation doesn’t lose it.
+ *
+ * FALLBACK: No host (e.g. direct install) → use stored session or show “Re-authenticate” (opens /auth in top window).
+ */
 import '@shopify/shopify-api/adapters/node';
 import { shopifyApi, ApiVersion, RequestedTokenType } from '@shopify/shopify-api';
 import { MemorySessionStorage } from '@shopify/shopify-app-session-storage-memory';
@@ -43,33 +55,121 @@ function sendReauthPage(res, req, shop) {
   );
 }
 
-/** Send embedded app loader: gets session token via App Bridge (no cookies), then redirects with token in URL. */
+/**
+ * Sends the embedded app session-token loader page.
+ * This page runs inside the Shopify Admin iframe: loads App Bridge, gets a session token (no cookies),
+ * then redirects to the same URL with ?token=JWT so the backend can exchange it for an access token.
+ * Uses Shopify's official App Bridge CDN and waits for script load + timeout for reviewability.
+ */
 function sendSessionTokenLoader(res, req, shop, host) {
   const apiKey = process.env.SHOPIFY_API_KEY || '';
   const baseUrl = getAppBaseUrl(req);
   const currentPath = req.originalUrl || req.url;
   const sep = currentPath.includes('?') ? '&' : '?';
   const redirectPrefix = baseUrl + currentPath + sep + 'token=';
+  const appBridgeScriptUrl = 'https://cdn.shopify.com/shopifycloud/app-bridge.js';
+  const timeoutMs = 12000;
+
+  const loaderHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Loading app…</title>
+  <style>
+    body { font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f6f6f7; }
+    .box { text-align: center; padding: 2rem; max-width: 360px; }
+    .msg { color: #202223; margin-bottom: 1rem; }
+    .err { color: #d72c0d; }
+    a { color: #2c6ecb; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <p class="msg" id="msg">Loading…</p>
+    <p class="msg err" id="err" style="display:none;"></p>
+    <a id="retry" href="#" style="display:none;">Retry</a>
+  </div>
+  <script>
+(function() {
+  var apiKey = ${JSON.stringify(apiKey)};
+  var host = ${JSON.stringify(host || '')};
+  var redirectPrefix = ${JSON.stringify(redirectPrefix)};
+  var timeoutMs = ${timeoutMs};
+  var msg = document.getElementById('msg');
+  var errEl = document.getElementById('err');
+  var retryLink = document.getElementById('retry');
+
+  function showError(title, detail) {
+    msg.textContent = title;
+    if (detail) { errEl.textContent = detail; errEl.style.display = 'block'; }
+    var p = new URLSearchParams(window.location.search);
+    p.delete('token');
+    var q = p.toString();
+    retryLink.href = window.location.pathname + (q ? '?' + q : '');
+    retryLink.style.display = 'inline';
+  }
+
+  if (!apiKey || !host) {
+    showError('Configuration error', 'Missing shop or host. Reopen the app from Shopify Admin.');
+    return;
+  }
+
+  var timedOut = false;
+  var timeoutId = setTimeout(function() {
+    timedOut = true;
+    showError('Loading is taking too long.', 'Close this app and open it again from the Shopify admin.');
+  }, timeoutMs);
+
+  var script = document.createElement('script');
+  script.src = ${JSON.stringify(appBridgeScriptUrl)};
+  script.onerror = function() {
+    if (timedOut) return;
+    clearTimeout(timeoutId);
+    showError('Could not load App Bridge.', 'Check your connection and retry.');
+  };
+  script.onload = function() {
+    if (timedOut) return;
+    clearTimeout(timeoutId);
+
+    var Ab = window['app-bridge'] || window['AppBridge'];
+    if (!Ab) {
+      showError('App Bridge did not load.', 'Try reopening the app from Shopify Admin.');
+      return;
+    }
+    var createApp = Ab.createApp || (Ab.default && Ab.default.createApp);
+    if (typeof createApp !== 'function') {
+      showError('App Bridge version not supported.', '');
+      return;
+    }
+    var app = createApp({ apiKey: apiKey, host: host });
+    var getSessionToken = (Ab.utilities && Ab.utilities.getSessionToken) || (app && app.getSessionToken);
+    if (typeof getSessionToken !== 'function') {
+      showError('Session token not available.', '');
+      return;
+    }
+    var promise = getSessionToken(app);
+    if (!promise || typeof promise.then !== 'function') {
+      showError('Could not get session token.', '');
+      return;
+    }
+    promise.then(function(token) {
+      if (timedOut || !token) return;
+      window.location.replace(redirectPrefix + encodeURIComponent(token));
+    }).catch(function(e) {
+      if (timedOut) return;
+      clearTimeout(timeoutId);
+      showError('Session token failed.', (e && e.message) || 'Reopen the app from Shopify Admin.');
+    });
+  };
+  document.head.appendChild(script);
+})();
+  </script>
+</body>
+</html>`;
+
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(
-    `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><p>Loading…</p>` +
-    `<script src="https://unpkg.com/@shopify/app-bridge@3"></script>` +
-    `<script>` +
-    `(function() {` +
-    `var apiKey = ${JSON.stringify(apiKey)};` +
-    `var host = ${JSON.stringify(host || '')};` +
-    `var redirectPrefix = ${JSON.stringify(redirectPrefix)};` +
-    `if (!apiKey || !host) { document.body.innerHTML = '<p>Missing app config. Check shop and host parameters.</p>'; return; }` +
-    `var Ab = window['app-bridge'];` +
-    `if (!Ab || !Ab.createApp) { document.body.innerHTML = '<p>App Bridge failed to load.</p>'; return; }` +
-    `var app = Ab.createApp({ apiKey: apiKey, host: host });` +
-    `var getSessionToken = Ab.utilities && Ab.utilities.getSessionToken;` +
-    `if (!getSessionToken) { document.body.innerHTML = '<p>Session token not available in this App Bridge version.</p>'; return; }` +
-    `getSessionToken(app).then(function(token) { window.location.href = redirectPrefix + encodeURIComponent(token); })` +
-    `.catch(function(err) { document.body.innerHTML = '<p>Could not get session token. Try reloading the app from the Shopify admin.</p>'; console.error(err); });` +
-    `})();` +
-    `</script></body></html>`
-  );
+  res.send(loaderHtml);
 }
 
 export function setupAuth(app) {
