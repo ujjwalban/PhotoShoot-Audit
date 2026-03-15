@@ -1,10 +1,17 @@
 import 'dotenv/config';
 import express from 'express';
 import { Liquid } from 'liquidjs';
+import { fileURLToPath } from 'url';
+import path from 'path';
 import { setupAuth } from '../server/shopifyAuth.js';
 import dashboardRoute from '../server/routes/dashboard.js';
 import productDetailRoute from '../server/routes/productDetail.js';
 import webhooksRoute from '../server/routes/webhooks.js';
+
+// Resolve __dirname equivalent for ESM (works on Windows + Linux/Vercel)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..');
 
 const app = express();
 
@@ -20,24 +27,25 @@ app.use((req, res, next) => {
   next();
 });
 
-// Liquid engine
+// Liquid engine — use path.join for cross-platform safety
+const viewsDir = path.join(projectRoot, 'views');
+const pagesDir = path.join(viewsDir, 'pages');
+const layoutsDir = path.join(viewsDir, 'layouts');
+const partialsDir = path.join(viewsDir, 'partials');
+
 const engine = new Liquid({
-  root: [
-    new URL('../views/pages', import.meta.url).pathname,
-    new URL('../views/layouts', import.meta.url).pathname,
-    new URL('../views/partials', import.meta.url).pathname,
-  ],
+  root: [pagesDir, layoutsDir, partialsDir],
   extname: '.liquid',
-  layouts: new URL('../views/layouts', import.meta.url).pathname,
-  partials: new URL('../views/partials', import.meta.url).pathname,
+  layouts: layoutsDir,
+  partials: partialsDir,
 });
 
 app.engine('liquid', engine.express());
-app.set('views', new URL('../views', import.meta.url).pathname);
+app.set('views', viewsDir);
 app.set('view engine', 'liquid');
 
 // Static files
-app.use('/public', express.static(new URL('../public', import.meta.url).pathname));
+app.use('/public', express.static(path.join(projectRoot, 'public')));
 
 // Body parsers
 app.use('/webhooks', express.raw({ type: 'application/json' }));
